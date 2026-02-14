@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  seedance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - VITE_DEFAULT_SESSION_ID=${VITE_DEFAULT_SESSION_ID:-}
+    image: seedance-web:latest
+    container_name: seedance-web
+    ports:
+      - "${PORT:-3001}:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - VITE_DEFAULT_SESSION_ID=${VITE_DEFAULT_SESSION_ID:-}
+    restart: unless-stopped
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - seedance-network
+
+networks:
+  seedance-network:
+    driver: bridge

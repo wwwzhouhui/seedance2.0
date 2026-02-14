@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科技日报 - GitHub热门项目</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563EB;
+            --secondary: #3B82F6;
+            --cta: #F97316;
+            --background: #F8FAFC;
+            --text: #1E293B;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --border: rgba(255, 255, 255, 0.2);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+            background-image: radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 20%),
+                              radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.1) 0%, transparent 20%);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+        
+        .date {
+            font-size: 1.2rem;
+            color: #64748B;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 16px;
+            min-width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--cta);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .stat-label {
+            font-size: 1rem;
+            color: #64748B;
+        }
+        
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .project-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+        }
+        
+        .project-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+        }
+        
+        .project-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .project-rank {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--cta);
+            font-family: 'Inter', sans-serif;
+            display: inline-block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .project-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .project-url {
+            color: #64748B;
+            font-size: 0.9rem;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 1rem;
+        }
+        
+        .project-url:hover {
+            color: var(--cta);
+            text-decoration: underline;
+        }
+        
+        .project-description {
+            color: #475569;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+        
+        .project-details {
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .detail-label {
+            font-size: 0.8rem;
+            color: #64748B;
+            margin-bottom: 0.25rem;
+        }
+        
+        .detail-value {
+            font-weight: 500;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .language-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 0.5rem;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--secondary);
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border);
+            color: #64748B;
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-card {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>科技日报</h1>
+            <div class="date">2026年02月13日</div>
+            <p>今日GitHub最热门的开源项目</p>
+        </header>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value">5</div>
+                <div class="stat-label">跟踪项目</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">1,103,302</div>
+                <div class="stat-label">总星数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">3</div>
+                <div class="stat-label">编程语言</div>
+            </div>
+        </div>
+        
+        <div class="projects-grid">
+            <!-- 项目 1 -->
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-rank">1</span>
+                    <h2 class="project-title">public-apis/public-apis</h2>
+                    <a href="https://github.com/public-apis/public-apis" class="project-url" target="_blank">https://github.com/public-apis/public-apis</a>
+                    <p class="project-description">一个用于软件和Web开发的免费API集合列表。</p>
+                </div>
+                <div class="project-details">
+                    <div class="detail-item">
+                        <div class="detail-label">编程语言</div>
+                        <div class="detail-value">Python</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">星数</div>
+                        <div class="detail-value">216,650</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">状态</div>
+                        <div class="detail-value">活跃</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 项目 2 -->
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-rank">2</span>
+                    <h2 class="project-title">freeCodeCamp/freeCodeCamp</h2>
+                    <a href="https://github.com/freeCodeCamp/freeCodeCamp" class="project-url" target="_blank">https://github.com/freeCodeCamp/freeCodeCamp</a>
+                    <p class="project-description">freeCodeCamp.org的开源代码库和课程。免费学习编程。</p>
+                </div>
+                <div class="project-details">
+                    <div class="detail-item">
+                        <div class="detail-label">编程语言</div>
+                        <div class="detail-value">TypeScript</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">星数</div>
+                        <div class="detail-value">397,718</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">状态</div>
+                        <div class="detail-value">活跃</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 项目 3 -->
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-rank">3</span>
+                    <h2 class="project-title">vercel/next.js</h2>
+                    <a href="https://github.com/vercel/next.js" class="project-url" target="_blank">https://github.com/vercel/next.js</a>
+                    <p class="project-description">生产级React框架</p>
+                </div>
+                <div class="project-details">
+                    <div class="detail-item">
+                        <div class="detail-label">编程语言</div>
+                        <div class="detail-value">JavaScript</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">星数</div>
+                        <div class="detail-value">115,545</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">状态</div>
+                        <div class="detail-value">活跃</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 项目 4 -->
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-rank">4</span>
+                    <h2 class="project-title">microsoft/vscode</h2>
+                    <a href="https://github.com/microsoft/vscode" class="project-url" target="_blank">https://github.com/microsoft/vscode</a>
+                    <p class="project-description">Visual Studio Code</p>
+                </div>
+                <div class="project-details">
+                    <div class="detail-item">
+                        <div class="detail-label">编程语言</div>
+                        <div class="detail-value">TypeScript</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">星数</div>
+                        <div class="detail-value">155,581</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">状态</div>
+                        <div class="detail-value">活跃</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 项目 5 -->
+            <div class="project-card">
+                <div class="project-header">
+                    <span class="project-rank">5</span>
+                    <h2 class="project-title">facebook/react</h2>
+                    <a href="https://github.com/facebook/react" class="project-url" target="_blank">https://github.com/facebook/react</a>
+                    <p class="project-description">一个用于构建用户界面的声明式、高效且灵活的JavaScript库。</p>
+                </div>
+                <div class="project-details">
+                    <div class="detail-item">
+                        <div class="detail-label">编程语言</div>
+                        <div class="detail-value">JavaScript</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">星数</div>
+                        <div class="detail-value">217,808</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">状态</div>
+                        <div class="detail-value">活跃</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>由GitHub Trending技能 & UI/UX Pro Max技能生成 | 数据更新于2026年02月13日</p>
+            <p>报告编译时间：14:28</p>
+        </div>
+    </div>
+</body>
+</html>

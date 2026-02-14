@@ -1,0 +1,13 @@
+node_modules
+server/node_modules
+npm-debug.log
+dist
+.git
+.env
+.env.local
+logs
+*.png
+*.mp4
+.claude
+.ipynb_checkpoints
+doc
