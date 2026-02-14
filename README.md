@@ -16,6 +16,14 @@ Seedance 2.0 Web 是一款面向内容创作者、设计师、营销人员的 AI
 
 后端直接对接即梦 API，无需依赖 jimeng-free-api 等中间代理服务，架构简洁、部署方便，支持 Docker 一键部署。
 
+ 项目体验地址 https://seedance2.duckcloud.fun/
+
+![image-20260214150856225](https://mypicture-1258720957.cos.ap-nanjing.myqcloud.com/Obsidian/image-20260214150856225.png)
+
+由于Seedance 2.0 太火爆了，本人积分也有限，需要体验可以设置自己的Session ID，体验完成后把Session ID删除
+
+![image-20260214151003775](https://mypicture-1258720957.cos.ap-nanjing.myqcloud.com/Obsidian/image-20260214151003775.png)
+
 ### 核心亮点
 
 - 双模型可选：Seedance 2.0（高质量）/ Seedance 2.0 Fast（快速生成）
@@ -128,6 +136,8 @@ npm run dev:server   # 仅启动 Express 后端 (:3001)
 7. 生成完成后自动播放，悬停视频右上角可下载
 
 ​    ![image-20260214135051255](https://mypicture-1258720957.cos.ap-nanjing.myqcloud.com/Obsidian/image-20260214135051255.png)
+
+
 
 ## 项目结构
 
