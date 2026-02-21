@@ -5,6 +5,7 @@ import multer from 'multer';
 import crypto from 'crypto';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import browserService from './browser-service.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -647,110 +648,131 @@ async function generateSeedanceVideo(
     ]),
   });
 
-  // 第3步: 提交生成请求
+  // 第3步: 提交生成请求 (通过浏览器代理绕过 shark 反爬)
   task.progress = '正在提交视频生成请求...';
   console.log(`[${taskId}] 提交生成请求: model=${model}, benefitType=${benefitType}`);
 
-  const { aigc_data } = await jimengRequest(
-    'post',
-    '/mweb/v1/aigc_draft/generate',
-    sessionId,
-    {
-      params: {
-        aigc_features: 'app_lip_sync',
-        web_version: '7.5.0',
-        da_version: SEEDANCE_DRAFT_VERSION,
+  const generateQueryParams = new URLSearchParams({
+    aid: String(DEFAULT_ASSISTANT_ID),
+    device_platform: 'web',
+    region: 'cn',
+    webId: String(WEB_ID),
+    da_version: SEEDANCE_DRAFT_VERSION,
+    web_component_open_flag: '1',
+    web_version: '7.5.0',
+    aigc_features: 'app_lip_sync',
+  });
+  const generateUrl = `${JIMENG_BASE_URL}/mweb/v1/aigc_draft/generate?${generateQueryParams}`;
+
+  const generateBody = {
+    extend: {
+      root_model: model,
+      m_video_commerce_info: {
+        benefit_type: benefitType,
+        resource_id: 'generate_video',
+        resource_id_type: 'str',
+        resource_sub_type: 'aigc',
       },
-      data: {
-        extend: {
-          root_model: model,
-          m_video_commerce_info: {
-            benefit_type: benefitType,
-            resource_id: 'generate_video',
-            resource_id_type: 'str',
-            resource_sub_type: 'aigc',
-          },
-          m_video_commerce_info_list: [
-            {
-              benefit_type: benefitType,
-              resource_id: 'generate_video',
-              resource_id_type: 'str',
-              resource_sub_type: 'aigc',
-            },
-          ],
+      m_video_commerce_info_list: [
+        {
+          benefit_type: benefitType,
+          resource_id: 'generate_video',
+          resource_id_type: 'str',
+          resource_sub_type: 'aigc',
         },
-        submit_id: submitId,
-        metrics_extra: metricsExtra,
-        draft_content: JSON.stringify({
-          type: 'draft',
-          id: generateUUID(),
-          min_version: SEEDANCE_DRAFT_VERSION,
-          min_features: ['AIGC_Video_UnifiedEdit'],
-          is_from_tsn: true,
-          version: SEEDANCE_DRAFT_VERSION,
-          main_component_id: componentId,
-          component_list: [
-            {
-              type: 'video_base_component',
-              id: componentId,
-              min_version: '1.0.0',
-              aigc_mode: 'workbench',
-              metadata: {
+      ],
+    },
+    submit_id: submitId,
+    metrics_extra: metricsExtra,
+    draft_content: JSON.stringify({
+      type: 'draft',
+      id: generateUUID(),
+      min_version: SEEDANCE_DRAFT_VERSION,
+      min_features: ['AIGC_Video_UnifiedEdit'],
+      is_from_tsn: true,
+      version: SEEDANCE_DRAFT_VERSION,
+      main_component_id: componentId,
+      component_list: [
+        {
+          type: 'video_base_component',
+          id: componentId,
+          min_version: '1.0.0',
+          aigc_mode: 'workbench',
+          metadata: {
+            type: '',
+            id: generateUUID(),
+            created_platform: 3,
+            created_platform_version: '',
+            created_time_in_ms: String(Date.now()),
+            created_did: '',
+          },
+          generate_type: 'gen_video',
+          abilities: {
+            type: '',
+            id: generateUUID(),
+            gen_video: {
+              type: '',
+              id: generateUUID(),
+              text_to_video_params: {
                 type: '',
                 id: generateUUID(),
-                created_platform: 3,
-                created_platform_version: '',
-                created_time_in_ms: String(Date.now()),
-                created_did: '',
-              },
-              generate_type: 'gen_video',
-              abilities: {
-                type: '',
-                id: generateUUID(),
-                gen_video: {
-                  type: '',
-                  id: generateUUID(),
-                  text_to_video_params: {
+                video_gen_inputs: [
+                  {
                     type: '',
                     id: generateUUID(),
-                    video_gen_inputs: [
-                      {
-                        type: '',
-                        id: generateUUID(),
-                        min_version: SEEDANCE_DRAFT_VERSION,
-                        prompt: '',
-                        video_mode: 2,
-                        fps: 24,
-                        duration_ms: actualDuration * 1000,
-                        idip_meta_list: [],
-                        unified_edit_input: {
-                          type: '',
-                          id: generateUUID(),
-                          material_list: materialList,
-                          meta_list: metaList,
-                        },
-                      },
-                    ],
-                    video_aspect_ratio: aspectRatio,
-                    seed: Math.floor(Math.random() * 1000000000),
-                    model_req_key: model,
-                    priority: 0,
+                    min_version: SEEDANCE_DRAFT_VERSION,
+                    prompt: '',
+                    video_mode: 2,
+                    fps: 24,
+                    duration_ms: actualDuration * 1000,
+                    idip_meta_list: [],
+                    unified_edit_input: {
+                      type: '',
+                      id: generateUUID(),
+                      material_list: materialList,
+                      meta_list: metaList,
+                    },
                   },
-                  video_task_extra: metricsExtra,
-                },
+                ],
+                video_aspect_ratio: aspectRatio,
+                seed: Math.floor(Math.random() * 1000000000),
+                model_req_key: model,
+                priority: 0,
               },
-              process_type: 1,
+              video_task_extra: metricsExtra,
             },
-          ],
-        }),
-        http_common_info: {
-          aid: DEFAULT_ASSISTANT_ID,
+          },
+          process_type: 1,
         },
-      },
+      ],
+    }),
+    http_common_info: {
+      aid: DEFAULT_ASSISTANT_ID,
+    },
+  };
+
+  const generateResult = await browserService.fetch(
+    sessionId,
+    WEB_ID,
+    USER_ID,
+    generateUrl,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(generateBody),
     }
   );
 
-  const historyId = aigc_data?.history_record_id;
+  // 解析浏览器代理返回的结果
+  if (generateResult.ret !== undefined && String(generateResult.ret) !== '0') {
+    const retCode = String(generateResult.ret);
+    const errMsg = generateResult.errmsg || retCode;
+    if (retCode === '5000') throw new Error('即梦积分不足，请前往即梦官网领取积分');
+    throw new Error(`即梦API错误 (ret=${retCode}): ${errMsg}`);
+  }
+
+  const aigcData = generateResult.data?.aigc_data;
+  const historyId = aigcData?.history_record_id;
   if (!historyId) throw new Error('未获取到记录ID');
 
   console.log(`[${taskId}] 生成请求已提交, historyId: ${historyId}`);
@@ -1087,6 +1109,16 @@ if (process.env.NODE_ENV === 'production') {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }
+
+// 优雅关闭: 清理浏览器进程
+process.on('SIGTERM', () => {
+  console.log('[server] 收到 SIGTERM，正在关闭...');
+  browserService.close().finally(() => process.exit(0));
+});
+process.on('SIGINT', () => {
+  console.log('[server] 收到 SIGINT，正在关闭...');
+  browserService.close().finally(() => process.exit(0));
+});
 
 app.listen(PORT, () => {
   console.log(`\n🚀 服务器已启动: http://localhost:${PORT}`);

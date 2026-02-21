@@ -11,15 +11,16 @@ services:
       - PORT=3001
       - VITE_DEFAULT_SESSION_ID=${VITE_DEFAULT_SESSION_ID:-}
     restart: unless-stopped
+    shm_size: '512mb'
     dns:
       - 8.8.8.8
       - 8.8.4.4
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     networks:
       - seedance-network
 

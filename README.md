@@ -3,7 +3,7 @@
 > 基于字节跳动即梦平台 Seedance 2.0 模型的全能参考视频生成 Web 应用
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Version](https://img.shields.io/badge/version-v1.0.0-green.svg)
+![Version](https://img.shields.io/badge/version-v0.0.2-green.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)
 ![React](https://img.shields.io/badge/React-19-61dafb.svg)
 ![Docker](https://img.shields.io/badge/Docker-supported-2496ED.svg)
@@ -53,6 +53,7 @@ Seedance 2.0 Web 是一款面向内容创作者、设计师、营销人员的 AI
 ### 环境要求
 
 - **Node.js** >= 18（本地开发）或 **Docker**（容器部署）
+- **Chromium 浏览器**（由 Playwright-core 驱动，用于绕过 shark 反爬）
 - 有效的即梦平台 **SessionID**（从 `jimeng.jianying.com` Cookie 获取）
 
 ### 安装步骤
@@ -65,7 +66,10 @@ cd seedance
 # 2. 安装所有依赖（前端 + 后端）
 npm run install:all
 
-# 3. 配置环境变量
+# 3. 安装 Chromium（Playwright 无头浏览器，用于绕过反爬）
+npx playwright-core install chromium
+
+# 4. 配置环境变量
 cp .env.example .env
 ```
 
@@ -154,8 +158,9 @@ seedance/
 ├── docker-compose.yml          # Docker Compose 编排
 ├── .dockerignore               # Docker 构建排除
 ├── server/
-│   ├── package.json            # 后端独立依赖（Express、Multer、dotenv）
-│   └── index.js                # Express 后端（纯 JS ESM，直接对接即梦 API）
+│   ├── package.json            # 后端独立依赖（Express、Multer、dotenv、Playwright-core）
+│   ├── index.js                # Express 后端（纯 JS ESM，直接对接即梦 API）
+│   └── browser-service.js      # 浏览器代理服务（Playwright 无头浏览器，绕过 shark 反爬）
 ├── src/
 │   ├── main.tsx                # 应用入口
 │   ├── App.tsx                 # 根组件（全局状态管理 + 左右分栏布局）
@@ -183,6 +188,7 @@ seedance/
 | Tailwind CSS | 3.4 | 原子化 CSS 样式方案 |
 | Express | 4.21 | 后端 HTTP 服务（纯 JavaScript ESM） |
 | Multer | 1.4 | 文件上传中间件 |
+| Playwright-core | 1.49+ | 无头浏览器，绕过 shark 反爬（a_bogus 签名） |
 | Docker | - | 容器化部署 |
 | ImageX CDN | - | 图片上传（AWS4-HMAC-SHA256 签名） |
 
@@ -198,7 +204,8 @@ seedance/
   │                          │ ────────────────────────────>│
   │                          │                              │
   │      { taskId }          │  提交生成任务                  │
-  │ <────────────────────────│ ────────────────────────────>│
+  │ <────────────────────────│ ─── Playwright 浏览器代理 ──>│
+  │                          │  (bdms SDK 自动注入 a_bogus)  │
   │                          │                              │
   │ GET /api/task/:taskId    │  后端轮询生成状态              │
   │ (前端每3秒轮询)           │ ────────────────────────────>│
@@ -392,6 +399,18 @@ SessionID 有效期有限，过期后需要重新登录 jimeng.jianying.com 获�
 </details>
 
 <details>
+<summary>提示 "shark not pass" 错误？</summary>
+
+v0.0.2 已修复此问题。该错误是即梦平台的 shark 反爬机制拦截了请求（缺少 `a_bogus` 签名）。解决方案：
+
+1. 确保已安装 Chromium：`npx playwright-core install chromium`
+2. 首次生成视频时会自动启动无头浏览器加载 bdms SDK，耗时约 3-5 秒
+3. 后续请求会复用浏览器会话，无额外延迟
+4. 如果仍然失败，检查服务器是否有足够内存运行 Chromium（建议至少 512MB 可用内存）
+
+</details>
+
+<details>
 <summary>Seedance 2.0 和 Seedance 2.0 Fast 有什么区别？</summary>
 
 - **Seedance 2.0**：高质量模式，生成效果更好，耗时较长
@@ -426,9 +445,8 @@ SessionID 有效期有限，过期后需要重新登录 jimeng.jianying.com 获�
 
 | 版本 | 日期 | 说明 |
 |------|------|------|
-| v1.0.0 | 2025-02-12 | 初始版本，支持 Seedance 2.0 视频生成 |
-| v1.1.0 | 2025-02-13 | 新增 Seedance 2.0 Fast 模型、响应式布局 |
-| v1.2.0 | 2025-02-14 | 新增 Docker 容器化部署支持 |
+| v0.0.1 | 2025-02-14 | 初始版本，支持 Seedance 2.0 / Fast 双模型视频生成、Docker 部署 |
+| v0.0.2 | 2026-02-21 | 修复 shark not pass 反爬拦截：引入 Playwright 无头浏览器代理，通过 bdms SDK 自动注入 a_bogus 签名 |
 
 ## 路线图
 

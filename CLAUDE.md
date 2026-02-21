@@ -38,8 +38,9 @@ npm start
 ### 双 package.json 结构
 
 - 根目录 `package.json` — 前端依赖（React、Vite、Tailwind）+ 开发脚本
-- `server/package.json` — 后端独立依赖（Express、multer、cors、dotenv）
+- `server/package.json` — 后端独立依赖（Express、multer、cors、dotenv、playwright-core）
 - `npm run install:all` 会分别安装两处依赖
+- 首次运行需执行 `npx playwright-core install chromium` 安装无头浏览器
 
 ### 双进程开发模式
 
@@ -58,9 +59,9 @@ npm start
 - `src/components/Icons.tsx` — SVG 图标组件集合
 - `src/components/{UploadArea,PromptInput,RatioSelector,DurationSelector,Toolbar}.tsx` — 已提取但当前未被 App.tsx 引用的组件文件
 
-### 后端（`server/index.js`，纯 JavaScript ESM）
+### 后端（`server/index.js` + `server/browser-service.js`，纯 JavaScript ESM）
 
-单文件后端，不使用 TypeScript。直接对接 jimeng.jianying.com API，无需中间代理服务。
+后端由两个模块组成，不使用 TypeScript。直接对接 jimeng.jianying.com API，无需中间代理服务。
 
 **API 接口：**
 - `POST /api/generate-video` — 接收 multipart form-data（prompt、model、ratio、duration、sessionId、files），异步启动生成任务，立即返回 `{ taskId }`。文件限制：单文件最大 20MB，最多 5 个文件。
@@ -74,8 +75,16 @@ npm start
 - `createAWSSignature()` — AWS4-HMAC-SHA256 签名，用于 ImageX CDN 上传
 - `uploadImageBuffer()` — 四步 ImageX 上传流程：获取 token → 申请权限 → 上传二进制数据 → 提交确认
 - `buildMetaListFromPrompt()` — 解析 prompt 中的 `@1`、`@2` 占位符，生成 material_list 和 meta_list
-- `generateSeedanceVideo()` — 完整的视频生成流程：上传图片 → 提交生成任务 → 轮询结果 → 获取高清 URL
+- `generateSeedanceVideo()` — 完整的视频生成流程：上传图片 → 通过浏览器代理提交生成任务 → 轮询结果 → 获取高清 URL
 - `calculateCRC32()` — 计算上传数据的 CRC32 校验值
+
+**浏览器代理服务（`server/browser-service.js`）：**
+- `BrowserService` 类 — 管理 Playwright 无头 Chromium 浏览器，用于绕过即梦 shark 反爬机制
+- 仅 `/mweb/v1/aigc_draft/generate` 接口通过浏览器代理发送请求，其他接口仍使用 Node.js 直接请求
+- 原理：在真实浏览器环境中加载 jimeng.jianying.com，bdms SDK 自动拦截 fetch 请求并注入 `a_bogus` 签名
+- 按 sessionId 隔离浏览器上下文，10 分钟空闲自动回收
+- 屏蔽图片/字体/样式等非必要资源，仅保留 bdms SDK 相关脚本域名白名单
+- 首次请求启动浏览器约 3-5 秒，后续请求复用会话无额外延迟
 
 **模型映射：**
 - `seedance-2.0` → `dreamina_seedance_40_pro` (benefit: `dreamina_video_seedance_20_pro`)
@@ -120,7 +129,17 @@ SessionID 优先级：请求体中的 `sessionId` 字段 > `.env` 中的 `VITE_D
 ## 注意事项
 
 - 后端直接与 jimeng.jianying.com 通信，不依赖 jimeng-free-api 等中间服务
+- 视频生成的 `/mweb/v1/aigc_draft/generate` 接口通过 Playwright 无头浏览器代理发送，其他接口直接请求
+- 首次运行需安装 Chromium：`npx playwright-core install chromium`，运行时需约 150-200MB 额外内存
 - 视频生成是异步任务模式，后端在内存中管理任务状态并轮询即梦 API
 - 浏览器无法直接播放即梦 CDN 视频（CORS），必须通过 `/api/video-proxy` 代理
 - 生产模式下 Express 同时提供 `dist/` 静态文件服务
 - 后端为纯 JavaScript，`npx tsc --noEmit` 仅检查 `src/` 下的前端代码
+- 服务器收到 SIGTERM/SIGINT 信号时会自动关闭 Chromium 进程
+
+## 版本记录
+
+| 版本 | 日期 | 说明 |
+|------|------|------|
+| v0.0.1 | 2025-02-14 | 初始版本，支持 Seedance 2.0 / Fast 双模型视频生成、Docker 部署 |
+| v0.0.2 | 2026-02-21 | 修复 shark not pass 反爬拦截：引入 Playwright 无头浏览器代理，通过 bdms SDK 自动注入 a_bogus 签名绕过即梦 shark 安全检测 |
